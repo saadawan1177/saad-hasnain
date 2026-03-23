@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>saadi</title>
+
+<style>
+body {
+    margin: 0;
+    font-family: Arial;
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    text-align: center;
+}
+
+header {
+    background: #03045e;
+    color: white;
+    padding: 20px;
+    font-size: 26px;
+}
+
+/* Surah list */
+.item {
+    background: white;
+    margin: 8px auto;
+    padding: 12px;
+    width: 300px;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+/* Reader */
+#reader {
+    display: none;
+    padding: 20px;
+}
+
+/* Tajweed Colors */
+.arabic span:nth-child(odd) {
+    color: blue;
+}
+.arabic span:nth-child(even) {
+    color: red;
+}
+
+.arabic {
+    font-size: 24px;
+    direction: rtl;
+    line-height: 2;
+}
+
+.urdu {
+    color: green;
+    margin-bottom: 15px;
+}
+
+audio {
+    margin-top: 15px;
+}
+</style>
+
+<script>
+
+let currentAudio = null;
+
+// Load Surahs fast
+function loadSurahs(){
+    let list = document.getElementById("list");
+    let html = "";
+    for(let i=1;i<=114;i++){
+        html += `<div class="item" onclick="openSurah(${i})">Surah ${i}</div>`;
+    }
+    list.innerHTML = html;
+}
+
+// Open Surah
+function openSurah(num){
+    document.getElementById("list").style.display="none";
+    document.getElementById("reader").style.display="block";
+
+    // Stop old audio
+    if(currentAudio){
+        currentAudio.pause();
+    }
+
+    // Audio (fast load)
+    let audioSrc = "https://download.quranicaudio.com/quran/mishaari_raashid_al_3afaasee/" + String(num).padStart(3,'0') + ".mp3";
+    let audio = document.getElementById("audio");
+    audio.src = audioSrc;
+    audio.play();
+    currentAudio = audio;
+
+    // Load Quran text FAST
+    fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,ur.jalandhry`)
+    .then(res => res.json())
+    .then(data => {
+        let arabic = data.data[0].ayahs;
+        let urdu = data.data[1].ayahs;
+
+        let output = "";
+
+        for(let i=0;i<arabic.length;i++){
+            let words = arabic[i].text.split(" ");
+            let colored = words.map(w => `<span>${w}</span>`).join(" ");
+
+            output += `
+            <div class="arabic">${colored}</div>
+            <div class="urdu">${urdu[i].text}</div>
+            <hr>`;
+        }
+
+        document.getElementById("quranText").innerHTML = output;
+    });
+}
+
+// Back button
+function goBack(){
+    document.getElementById("reader").style.display="none";
+    document.getElementById("list").style.display="block";
+
+    // STOP AUDIO immediately
+    let audio = document.getElementById("audio");
+    audio.pause();
+    audio.currentTime = 0;
+}
+
+</script>
+
+</head>
+
+<body onload="loadSurahs()">
+
+<header>
+saad hasnain
+</header>
+
+<div id="list"></div>
+
+<div id="reader">
+    <button onclick="goBack()">⬅ Back</button>
+
+    <audio id="audio" controls></audio>
+
+    <div id="quranText"></div>
+</div>
+
+</body>
+</html>
